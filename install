@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -e
+
+if [[ $EUID -ne 0 ]]; then
+  echo "This script must be run as root since it will install commands to /usr/local/bin" 1>&2
+  exit 1
+fi
+
+if [ -e bin/sentry ]; then
+  cp bin/sentry /usr/local/bin/sentry
+  cp bin/sentry-run /usr/local/bin/sentry-run
+  cp bin/sentry-watch /usr/local/bin/sentry-watch
+  chmod +x /usr/local/bin/sentry
+  chmod +x /usr/local/bin/sentry-run
+  chmod +x /usr/local/bin/sentry-watch
+
+  if ! command -v entr 2>&1 > /dev/null; then
+    cat << EOF
+The entr command is not installed and must be available in PATH, please see http://entrproject.org
+on mac:
+  brew install entr
+on linux:
+  hg clone https://bitbucket.org/eradman/entr
+  cd entr
+  hg update entr-3.2 ## or whichever is the most recent version
+  ./configure
+  make test
+  sudo make install
+
+Otherwise sentry was installed to /usr/local/bin and you're good to go as soon as entr has been installed as well.
+
+EOF
+  fi
+else
+  ## os x compatible
+  sentry_install_tmp=$(mktemp -d 2>/dev/null || mktemp -d -t 'sentry_install_tmp')
+  pushd $sentry_install_tmp
+  mkdir -p bin
+  curl https://raw.githubusercontent.com/johnae/sentry/master/install > install
+  curl https://raw.githubusercontent.com/johnae/sentry/master/bin/sentry > bin/sentry
+  curl https://raw.githubusercontent.com/johnae/sentry/master/bin/sentry-run > bin/sentry-run
+  curl https://raw.githubusercontent.com/johnae/sentry/master/bin/sentry-watch > bin/sentry-watch
+  chmod +x install
+  ./install
+  popd
+  rm -rf $sentry_install_tmp
+fi

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -e
+
+if [[ $EUID -ne 0 ]]; then
+  echo "This script must be run as root since it will uninstall commands from /usr/local/bin" 1>&2
+  exit 1
+fi
+
+rm -f /usr/local/bin/sentry
+rm -f /usr/local/bin/sentry-run
+rm -f /usr/local/bin/sentry-watch

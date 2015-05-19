@@ -1,0 +1,43 @@
+#!/bin/bash
+
+help() {
+  cat <<HELP
+$0 <command> [params]
+
+Available commands:
+
+run (alias: 'r')             Runs the specs for the file that was changed
+watch (alias: 'w')           Watches specified directories for changes runs the specs using "sentry run" (this is the main command)
+HELP
+}
+
+if [ $# -lt 1 ]; then
+  help
+  exit 1
+fi
+
+sub_command=$1
+shift
+
+case "$sub_command" in
+  run|r)
+    sub_command=run
+    ;;
+
+  watch|w)
+    sub_command=watch
+    ;;
+
+  help)
+    help
+    exit 0
+    ;;
+
+  *)
+    help
+    exit 1
+    ;;
+esac
+
+exec sentry-$sub_command $@
+

@@ -1,0 +1,46 @@
+#!/bin/bash
+
+SPEC_COMMAND=${@:1:$(($# - 1))}
+CHANGED_FILE=${@:$#}
+
+SPEC_PATH=spec/
+CURRENT_DIR=$(pwd)/
+## this is the relative path within the working directory, we just remove the absolute path to "here"
+PROJECT_PATH=$(echo $CHANGED_FILE | sed "s|$CURRENT_DIR||g")
+
+defined () {
+    [[ ${!1-X} == ${!1-Y} ]]
+}
+
+has_value () {
+    if defined $1; then
+        if [[ -n ${!1} ]]; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
+if echo $PROJECT_PATH | grep "^$SPEC_PATH.*" 2>&1>/dev/null; then
+  ## a test file was changed, we just run that
+  if echo $PROJECT_PATH | grep "_spec.*$" 2>&1>/dev/null; then
+    SPEC_FILE=$PROJECT_PATH
+  fi
+else
+  ## some other file was changed, we need to slightly fuzzily find the
+  ## corresponding spec file to run
+  FILENAME=$(basename $PROJECT_PATH) # the name of the file including extension
+  DIRNAME=$(basename $(dirname $PROJECT_PATH)) # the dirname of the changed file
+  BASENAME=${FILENAME%.*} # the name of the file without extension
+  ## possibly too naive, it basically checks for a spec file called <basename>_spec.<some-extension> within a directory called the same as the above changed file's directory
+  ## it would match for example app/models/user.rb to spec/models/user_spec.rb, it would ALSO match app/models/user.rb to spec/app/models/user_spec.rb which may be what is too naive
+  ## about this - works pretty well in practice. In fact, it would match app/a/b/c/d/e/models/user.rb to spec/q/w/e/r/t/y/xxx/donald-duck/models/user_spec.rb
+  SPEC_FILE=$(find $SPEC_PATH -type f -name "*_spec*" | grep $DIRNAME\/$BASENAME"_spec.*" | head -1)
+fi
+
+if has_value SPEC_FILE; then
+  if [ -e $SPEC_FILE ]; then
+    echo $SPEC_FILE
+    $SPEC_COMMAND $SPEC_FILE
+  fi
+fi

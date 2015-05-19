@@ -1,0 +1,60 @@
+#!/bin/bash
+
+defined () {
+    [[ ${!1-X} == ${!1-Y} ]]
+}
+
+has_value () {
+    if defined $1; then
+        if [[ -n ${!1} ]]; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
+if [ -e .sentry ]; then
+  source .sentry
+fi
+
+SENTRY_SPEC_COMMAND=${SENTRY_SPEC_COMMAND:-$@}
+SENTRY_ENTR_SWITCHES=${SENTRY_ENTR_SWITCHES:-"-p"}
+
+if ! has_value SENTRY_SPEC_COMMAND; then
+  echo "Please supply the spec command to use as the first argument, something like \"rspec -f d\""
+  echo "or set the SENTRY_SPEC_COMMAND environmnent variable"
+  exit 1
+fi
+
+SENTRY_WATCH_DIRS=${SENTRY_WATCH_DIRS:-""}
+## add some default watch dirs
+SENTRY_WATCH_DIRS="$SENTRY_WATCH_DIRS src lib app spec test"
+## remove dupes
+SENTRY_WATCH_DIRS=$(echo $SENTRY_WATCH_DIRS | sed 's/\s/\n/g' | sort -nr | uniq)
+
+## only include directories that exist
+WATCH_DIRS=""
+for dir in $SENTRY_WATCH_DIRS; do
+  if [ -d $dir ]; then
+    WATCH_DIRS=$(echo "$WATCH_DIRS $dir" | sed 's/^\s*//g')
+  fi
+done
+
+if command -v entr 2>&1 > /dev/null; then
+  exec find $WATCH_DIRS -type f | entr $SENTRY_ENTR_SWITCHES sentry run "$SENTRY_SPEC_COMMAND" /_
+else
+  cat << EOF
+The entr command must be available in PATH, please see http://entrproject.org
+on mac:
+  brew install entr
+on linux:
+  hg clone https://bitbucket.org/eradman/entr
+  cd entr
+  hg update entr-3.2 ## or whichever is the most recent version
+  ./configure
+  make test
+  sudo make install
+
+EOF
+exit 1
+fi
