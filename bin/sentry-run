@@ -36,6 +36,10 @@ else
   ## it would match for example app/models/user.rb to spec/models/user_spec.rb, it would ALSO match app/models/user.rb to spec/app/models/user_spec.rb which may be what is too naive
   ## about this - works pretty well in practice. In fact, it would match app/a/b/c/d/e/models/user.rb to spec/q/w/e/r/t/y/xxx/donald-duck/models/user_spec.rb
   SPEC_FILE=$(find $SPEC_PATH -type f -name "*_spec*" | grep $DIRNAME\/$BASENAME"_spec.*" | head -1)
+  if ! has_value SPEC_FILE; then
+    ## allow files directly below the spec path if none was found further down
+    SPEC_FILE=$(find $SPEC_PATH -type f -name "*_spec*" | grep $SPEC_PATH$BASENAME"_spec.*" | head -1)
+  fi
 fi
 
 if has_value SPEC_FILE; then
