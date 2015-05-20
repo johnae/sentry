@@ -52,3 +52,12 @@ SENTRY_WATCH_DIRS="mysrc mylib"
 
 Those will be appended to the defaults. Only dirs that exist will actually be watched.
 
+## More configuration
+
+There is very basic mapping capability through .sentry_mapping - a file in your project dir. It is expected to contain:
+
+```
+spec/path/file_spec.ext app/path/somecode.ext
+spec/path/other_spec.ext app/path/*/stuff_*.ext
+```
+
