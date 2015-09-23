@@ -1,3 +1,8 @@
+### Skip using this
+
+See [Spook](https://github.com/johnae/spook) instead.
+
+
 ### Poor mans guard: sentry
 
 This is a very simple tool with some of the functionality of guard: https://github.com/guard/guard
